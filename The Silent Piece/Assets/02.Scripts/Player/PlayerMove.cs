@@ -8,9 +8,9 @@ public class PlayerMove : MonoBehaviour
     private InputAction  _jumpAction;
     private Rigidbody2D  _rigid;
     private Vector2      _moveDir;
-    private float        _moveSpeed = 10.0f;
-    private float        _jumpPower = 12f;
-
+    private float        _moveSpeed = 5.0f;
+    private float        _jumpPower = 12.0f;
+    private bool         _canJump = true;
     private void Awake()
     {
         _input = this.GetComponentSafe<PlayerInput>();
@@ -18,6 +18,12 @@ public class PlayerMove : MonoBehaviour
 
         InitializeMoveAction();
         InitializeJumpAction();
+    }
+
+    private void Update()
+    {
+        if(_rigid.linearVelocityY < 0)
+            checkGround();
     }
 
     private void FixedUpdate()
@@ -60,13 +66,25 @@ public class PlayerMove : MonoBehaviour
 
     private void Move()
     {
-        _rigid.MovePosition(_rigid.position + _moveDir * Time.fixedDeltaTime * _moveSpeed);
+        _rigid.linearVelocity = new Vector2(_moveDir.x * _moveSpeed, _rigid.linearVelocity.y);
     }
 
-    // TODO: jump is not worked; may be gravity scale problem??
     private void Jump()
     {
-        Debug.Log("Jump");
-        _rigid.AddForce(Vector2.up * _jumpPower, ForceMode2D.Impulse);
+        if(_canJump)
+        {
+            _rigid.AddForceY(_jumpPower, ForceMode2D.Impulse);
+            _canJump = false;
+        }
+
+    }
+
+    private void checkGround()
+    {
+        float rayDist = 0.6f;
+        if(!_canJump && Physics2D.Raycast(_rigid.position, Vector2.down, rayDist, LayerMask.GetMask("MAP")))
+        {
+            _canJump = true;
+        }
     }
 }
